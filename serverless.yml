@@ -1,0 +1,54 @@
+
+service: api-eventbridge-sqs
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: eu-west-1
+  # iamRoleStatements:
+  #     - Effect: Allow
+  #       Action: 
+  #         - events:PutEvents
+  #       Resource: !GetAtt EventBus.Arn
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: 
+            - events:PutEvents
+          Resource: !GetAtt EventBus.Arn
+
+functions:
+  putEventsLambda:
+    handler: functions/putEvents.handler
+    environment:
+      EventBusName : !Ref EventBus
+    events:
+      - http:
+          path: /generate
+          method: post
+
+  
+  processEventsLambda:
+    handler: functions/processEvents.handler
+    events:
+      - sqs:
+          arn: !GetAtt TargetSQS.Arn
+          batchSize: 10
+          functionResponseType: "ReportBatchItemFailures"
+
+
+plugins:
+  - serverless-iam-roles-per-function
+
+
+# you can add CloudFormation resource templates here
+resources:
+ Resources: ${file(resources.yml)}
+
+ Outputs:
+    EventBusName:
+      Value: !Ref EventBus
