@@ -21,6 +21,17 @@ provider:
             - events:PutEvents
           Resource: !GetAtt EventBus.Arn
 
+
+custom:
+  apiGatewayServiceProxies:
+    - eventbridge:
+        path: /eventbridge
+        method: post
+        source: 'fuel-app'
+        detailType: 'user-signup'
+        eventBusName: { Ref: EventBus }
+        cors: true
+
 functions:
   putEventsLambda:
     handler: functions/putEvents.handler
@@ -43,9 +54,8 @@ functions:
 
 plugins:
   - serverless-iam-roles-per-function
+  - serverless-apigateway-service-proxy
 
-
-# you can add CloudFormation resource templates here
 resources:
  Resources: ${file(resources.yml)}
 
